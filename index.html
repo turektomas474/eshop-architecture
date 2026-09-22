@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini E‑shop (jediný soubor) – SPA + fake backend</title>
+  <meta name="description" content="Studijní e‑shop postavený čistě na HTML, CSS a JavaScriptu v jediném souboru. SPA s hash routerem, localStorage, katalog, detail, košík, pokladna a admin objednávky." />
+
+  <!-- ===========================
+       ZÁKLADNÍ STYLY (čisté CSS)
+       - Responzivní layout (flex + grid)
+       - Světlý/temný kontrast, přehlednost
+       - Bez externích knihoven
+       =========================== -->
+  <style>
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    background: linear-gradient(180deg, #0b0c10 0%, #0f1220 100%);
+    color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial;
+    letter-spacing: .2px;
+}
+
+/* PROMĚNNÉ - barvy, stíny, radiusy */
+:root {
+    --bg: #0b0c10;
+    --panel: #121319;
+    --text: #e8ecf1;
+    --muted: #a3adbb;
+    --accent: #4f8cff;
+    --accent-2: #00c2a8;
+    --danger: #ff5678;
+    --warning: #ffb020;
+    --ok: #35d07f;
+    --border: #1f2430;
+    --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+    --radius: 16px;
+    --radius-sm: 10px;
+}
+
+/* GLOBÁLNÍ ELEMENTY */
+a {
+    color: inherit;
+    text-decoration: none;
+}
+img {
+    max-width: 100%;
+    display: block;
+}
+button, input, select, textarea {
+    font: inherit;
+    color: inherit;
+}
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 640px;
+}
+label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+input, textarea {
+    padding: 10px 12px;
+    background: #0e1220;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+.help {
+    font-size: .9em;
+    color: var(--muted);
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+}
+th {
+    color: var(--muted);
+    font-weight: 600;
+}
+
+/* TLAČÍTKA */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: #0f1426;
+    cursor: pointer;
+}
+.btn.primary {
+    background: linear-gradient(135deg, rgba(79, 140, 255, .22), rgba(0, 194, 168, .22));
+    border-color: transparent;
+}
+.btn.danger {
+    background: linear-gradient(135deg, rgba(255, 86, 120, .25), rgba(255, 86, 120, .15));
+    border-color: transparent;
+}
+.btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+/* UTILITY TŘÍDY */
+.hidden {
+    display: none !important;
+}
+.muted {
+    color: var(--muted);
+}
+.badge {
+    background: var(--accent);
+    color: #0b0c10;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-weight: 800;
+}
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.inline {
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* KONTEJNER STRÁNKY */
+.app {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+/* HLAVIČKA A NAVIGACE - header, .nav */
+header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: saturate(140%) blur(8px);
+    background: rgba(11, 12, 16, .6);
+    border-bottom: 1px solid var(--border);
+}
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+}
+.brand {
+    font-weight: 800;
+    letter-spacing: .4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.brand .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 0 20px rgba(79, 140, 255, .6);
+}
+.nav a {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    opacity: .9;
+}
+.nav a.active {
+    background: linear-gradient(135deg, rgba(79, 140, 255, .2), rgba(0, 194, 168, .2));
+    border-color: transparent;
+}
+.nav .spacer {
+    flex: 1;
+}
+
+/* HLAVNÍ OBSAH A SEKCE - main, section */
+main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px 16px 40px;
+}
+section {
+    background: radial-gradient(1200px 300px at top, rgba(255, 255, 255, .04), transparent 50%), var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+section header {
+    position: unset;
+    backdrop-filter: none;
+    background: transparent;
+    border-bottom: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+}
+section .section-body {
+    padding: 18px;
+}
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+}
+.section-title h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+/* KATALOG - toolbar, mřížka produktů (flex), karta */
+.toolbar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.search {
+    flex: 1;
+    min-width: 240px;
+    display: flex;
+    gap: 8px;
+}
+.search input {
+    flex: 1;
+    padding: 10px 12px;
+    background: #0e1220;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+.search button {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    background: #0f1426;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+.grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1 1 calc(25% - 12px);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .02), rgba(255, 255, 255, .01));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+.card img {
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    background: #0d101a;
+}
+.card .pad {
+    padding: 12px;
+}
+.price {
+    font-weight: 700;
+}
+
+/* DETAIL PRODUKTU */
+.detail-wrap {
+    display: flex;
+    gap: 20px;
+}
+.detail-wrap > * {
+    flex: 1;
+}
+.bigimg {
+    flex: 1.2;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+.qty {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.qty button {
+    width: 32px;
+    height: 32px;
+}
+
+/* KOŠÍK */
+.cart-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--border);
+}
+.cart-item img {
+    width: 80px;
+    flex-shrink: 0;
+}
+.cart-item .info {
+    flex: 1;
+}
+.cart-item:last-child {
+    border-bottom: none;
+}
+.totals {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+    max-width: 420px;
+}
+
+/* MEDIA QUERIES */
+@media (max-width: 1000px) {
+    .card { flex: 1 1 calc(33.333% - 11px); }
+}
+@media (max-width: 900px) {
+    .detail-wrap { flex-direction: column; }
+}
+@media (max-width: 720px) {
+    .card { flex: 1 1 calc(50% - 8px); }
+}
+@media (max-width: 480px) {
+    .card { flex: 1 1 100%; }
+}
+
+/*
+    Použité barvy
+
+    --bg: #0b0c10
+    --panel: #121319
+    --text: #e8ecf1
+    --muted: #a3adbb
+    --accent: #4f8cff
+    --accent-2: #00c2a8
+    --danger: #ff5678
+    --warning: #ffb020
+    --ok: #35d07f
+    --border: #1f2430
+
+    POJMENOVÁNÍ SEKCÍ
+
+    .app            kontejner
+    header .nav     hlavička/navigace
+    main            hlavní obsah
+    section         obecný panel
+    .toolbar/.grid/.card    katalog produktů (flex)
+    .detail-wrap    detail produktu (flex)
+    .cart-item/.totals      košík
+    form/label/input        formuláře
+    table/th/td     tabulka
+*/
+  
+   </style>
+</head>
+<body>
+  <!-- ===========================
+       NAVIGACE A STATUS BAR
+       - SPA ovládání přes #hash
+       - Zobrazení počtu položek v košíku
+       =========================== -->
+       
+<!-- 
+
+
+body
+   header
+      div app nav
+          div brand
+          
+   main app
+       section catalog
+          
+
+
+ -->
+  <header>
+    <div class="app nav">
+      <div class="brand"><span class="dot"></span> Mini E‑shop</div>
+      <a href="#catalog" data-link>🛍️ Katalog</a>
+      <a href="#cart" data-link>🧺 Košík <span id="navCartCount" class="badge">0</span></a>
+      <a href="#checkout" data-link>💳 Pokladna</a>
+      <a href="#admin" data-link>🛠️ Admin</a>
+      <span class="spacer"></span>
+      <span class="muted" id="status"></span>
+    </div>
+  </header>
+
+  <main class="app">
+
+    <!-- ===========================
+         SEKCE: KATALOG (#catalog)
+         - Vyhledávání podle názvu
+         - Karty produktů
+         =========================== -->
+    <section id="catalog" class="route">
+      <div class="section-title"><h2>🛍️ Katalog</h2></div>
+      <div class="section-body">
+        <div class="toolbar">
+          <div class="search">
+            <input id="searchInput" type="search" placeholder="Hledat produkt podle názvu…" />
+            <button id="searchClear" class="btn" title="Vymazat">✖</button>
+          </div>
+          <div class="muted">Počet produktů: <strong id="productCount">0</strong></div>
+        </div>
+        <!-- zde je produkt grid -->
+        <div id="productGrid" class="grid">
+            <div class="card">
+                <img src="" alt="">
+                <div class="pad">
+                    <div class="name">Nazev produktu</div>
+                    <div class="row">
+                        <div class="price">9999</div>
+                        <div class="inline">
+                            <a href="#" class="btn">Detail</a>
+                            <button class="primary btn">Přidej do košíku</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <img src="" alt="">
+                <div class="pad">
+                    <div class="name">Nazev produktu</div>
+                    <div class="row">
+                        <div class="price">9999</div>
+                        <div class="inline">
+                            <a href="#" class="btn">Detail</a>
+                            <button class="primary btn">Přidej do košíku</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <img src="" alt="">
+                <div class="pad">
+                    <div class="name">Nazev produktu</div>
+                    <div class="row">
+                        <div class="price">9999</div>
+                        <div class="inline">
+                            <a href="#" class="btn">Detail</a>
+                            <button class="primary btn">Přidej do košíku</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div class="card">
+                <img src="" alt="">
+                <div class="pad">
+                    <div class="name">Nazev produktu</div>
+                    <div class="row">
+                        <div class="price">9999</div>
+                        <div class="inline">
+                            <a href="#" class="btn">Detail</a>
+                            <button class="primary btn">Přidej do košíku</button>
+                        </div>
+                    </div>
+                </div>
+            </div>                                
+            
+        </div>
+      </div>
+    </section>
+    
+    <section id="demoSection" class="demo-section">
+        <div class="section-title"><h2>toto je demo sekce</h2></div>
+        <div class="section-body">
+            <p>ktery kod je generovan JAVASCRIPTEM?</p>
+                <ul>
+                    <li>produktova karta, odkud kam se produkt vaze?</li>
+                    <li>vaze se na produktGrid</li>
+                    <li>detail produktu</li>
+                    <li>radka zbozi v kosiku</li>
+                </ul>
+        </div>
+
+    </section>
+
+    <!-- ===========================
+         SEKCE: DETAIL (#detail/:id)
+         - Velký obrázek, popis, cena
+         - Přidání do košíku / práce s položkou
+         =========================== -->
+    <section id="detail" class="route">
+      <div class="section-title"><h2>🔎 Detail produktu</h2></div>
+      <div class="section-body">
+        <div id="detailBody" class="detail-wrap">
+            <div>
+                <img class="bigimg" src="${makeImageData(p.name, p.color)}" alt="${p.name}" />
+            </div>
+            <div><h3 style="margin:0 0 8px">${p.name}</h3></div>
+            <div class="muted" style="margin-bottom:10px">Skladem: 999 ks</div>
+            <p style="margin-top:0">${p.desc}</p>
+            <div class="price" style="font-size:22px; margin: 10px 0;">${CZK.format(p.price)}</div>
+
+            <div class="inline" style="margin:10px 0 16px">
+                <div class="qty">
+                <button class="btn" id="minus">−</button>
+                <input id="qty" type="number" min="1" max="99" value="${Math.max(qty,1)}" style="width:70px" />
+                <button class="btn" id="plus">+</button>
+                </div>
+                <button id="addBtn" class="btn primary">${qty>0? 'Aktualizovat košík' : 'Přidat do košíku'}</button>
+                <button id="removeBtn" class="btn danger">Odebrat z košíku</button>' : ''}
+            </div>
+
+            <div id="calc" class="muted"></div>
+        </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===========================
+         SEKCE: KOŠÍK (#cart)
+         - Výpis položek, množství, mazání
+         - Mez součet a celkem
+         =========================== -->
+    <section id="cart" class="route">
+      <div class="section-title"><h2>🧺 Košík</h2></div>
+      <div class="section-body">
+        <div id="cartList">
+            
+            <div class="row">
+            <a href="#detail/${row.product.id}"><strong>Název produkti</strong></a>
+            <span class="price">9999</span>
+          </div>
+          <div class="inline" style="margin-top:6px">
+            <div class="qty">
+              <button class="btn" data-dec>−</button>
+              <input data-qty type="number" min="1" max="99" value="${row.qty}" style="width:70px" />
+              <button class="btn" data-inc>+</button>
+            </div>
+            <button class="btn danger" data-remove>Odstranit</button>
+          </div>
+        </div>
+        <div id="cartTotals" class="totals"></div>
+        <div class="row" style="margin-top:12px">
+          <a class="btn" href="#catalog">⬅️ Zpět do katalogu</a>
+          <a class="btn primary" href="#checkout">Pokračovat k pokladně ➡️</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===========================
+         SEKCE: POKLADNA (#checkout)
+         - Formulář s validací
+         - Uložení objednávky + vyprázdnění košíku
+         =========================== -->
+    <section id="checkout" class="route">
+      <div class="section-title"><h2>💳 Pokladna</h2></div>
+      <div class="section-body">
+        <form id="checkoutForm">
+          <label>Jméno a příjmení<input name="name" required placeholder="Jan Novák" /></label>
+          <label>E‑mail<input name="email" required type="email" placeholder="jan.novak@example.cz" /></label>
+          <label>Adresa<input name="address" required placeholder="Ulice 123" /></label>
+          <label>Město<input name="city" required placeholder="Praha" /></label>
+          <label>PSČ<input name="zip" required pattern="\\d{3}\\s?\\d{2}" placeholder="110 00" /></label>
+          <div class="help">Po odeslání se objednávka uloží do LocalStorage a košík se vyprázdní.</div>
+          <div class="row">
+            <a class="btn" href="#cart">⬅️ Zpět do košíku</a>
+            <button class="btn primary" type="submit">Odeslat objednávku</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===========================
+         SEKCE: ADMIN (#admin)
+         - Tabulka všech objednávek z localStorage
+         - Možnost mazat objednávky
+         =========================== -->
+    <section id="admin" class="route">
+      <div class="section-title"><h2>🛠️ Administrace objednávek</h2></div>
+      <div class="section-body">
+        <div class="row" style="margin-bottom:10px">
+          <button id="purgeAll" class="btn danger">Smazat VŠECHNY objednávky</button>
+          <span class="muted">Počet objednávek: <strong id="orderCount">0</strong></span>
+        </div>
+        <div style="overflow:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>ID</th>
+                <th>Vytvořeno</th>
+                <th>Zákazník</th>
+                <th>E‑mail</th>
+                <th>Adresa</th>
+                <th>Položky</th>
+                <th>Celkem</th>
+                <th>Akce</th>
+              </tr>
+            </thead>
+            <tbody id="orderTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===========================
+       LOGIKA A FAKE BACKEND (čistý JS)
+       - Jednoduchý hash router (SPA)
+       - localStorage (cart, orders)
+       - In‑memory produkty
+       - Modulární funkce s komentáři
+       =========================== -->
+  <script>
+
+ 
+  </script>
+</body>
+</html>
